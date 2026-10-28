@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Lingo Lens 设置</title>
+  <style>
+    :root { --paper: #f6f5f1; --white: #fffefa; --ink: #1f2926; --muted: #76817c; --line: #dfe2dc; --accent: #df664b; }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--paper); color: var(--ink); font-family: Aptos, Segoe UI, system-ui, sans-serif; }
+    main { width: min(620px, calc(100% - 32px)); margin: 48px auto; }
+    .eyebrow { color: var(--accent); font-size: 11px; letter-spacing: .12em; font-weight: 750; text-transform: uppercase; }
+    h1 { font-size: 38px; letter-spacing: -.06em; margin: 12px 0 8px; }
+    .intro { color: var(--muted); margin: 0 0 28px; }
+    .panel { background: var(--white); border: 1px solid var(--line); border-radius: 14px; padding: 24px; }
+    label { display: block; font-size: 13px; font-weight: 700; margin-bottom: 8px; }
+    input { width: 100%; border: 1px solid var(--line); border-radius: 9px; padding: 11px 12px; font: inherit; color: var(--ink); background: #fff; }
+    input:focus { outline: 3px solid rgba(223,102,75,.2); border-color: var(--accent); }
+    .hint { color: var(--muted); font-size: 12px; line-height: 1.55; margin: 9px 0 18px; }
+    button { border: 0; background: var(--ink); color: var(--white); border-radius: 999px; padding: 10px 15px; font: inherit; cursor: pointer; }
+    button:hover { background: #30403a; }
+    #status { color: #4a6e58; min-height: 22px; margin-top: 14px; font-size: 13px; }
+    .note { border-top: 1px solid var(--line); margin-top: 28px; padding-top: 18px; color: var(--muted); font-size: 13px; line-height: 1.65; }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="eyebrow">Lingo Lens</div>
+    <h1>按需翻译，继续阅读。</h1>
+    <p class="intro">选中网页中的英文，点击选区旁的翻译按钮。这里可以更换翻译服务地址。</p>
+    <section class="panel">
+      <label for="translateEndpoint">翻译服务地址</label>
+      <input id="translateEndpoint" type="url" spellcheck="false" />
+      <p class="hint">默认使用 MyMemory 的公开接口。若你有自己的翻译后端，可以填入兼容 q 和 langpair 参数的地址。</p>
+      <button id="save" type="button">保存设置</button>
+      <div id="status" role="status"></div>
+      <div class="note">收藏的单词会保存在本机浏览器中。当前版本先聚焦“选中后翻译”，后续可以继续加入生词复习和个人词汇量识别。</div>
+    </section>
+  </main>
+  <script src="options.js"></script>
+</body>
+</html>

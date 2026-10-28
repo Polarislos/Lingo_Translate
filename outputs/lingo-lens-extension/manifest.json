@@ -1,0 +1,22 @@
+{
+  "manifest_version": 3,
+  "name": "Lingo Lens Selection Translator",
+  "version": "0.1.0",
+  "description": "选中英文，按需在选区旁查看中文翻译。",
+  "permissions": ["storage"],
+  "host_permissions": ["https://api.mymemory.translated.net/*"],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "action": {
+    "default_title": "Lingo Lens"
+  },
+  "options_page": "options.html"
+}

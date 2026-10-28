@@ -1,0 +1,338 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#f6f5f1" />
+  <title>Lingo Lens | 渐进式英文阅读</title>
+  <style>
+    :root {
+      --paper: #f6f5f1;
+      --paper-deep: #ecebe5;
+      --ink: #1f2926;
+      --muted: #76817c;
+      --line: #dfe2dc;
+      --accent: #df664b;
+      --accent-soft: #fae4dd;
+      --mint: #dcebe2;
+      --white: #fffefa;
+      --radius: 14px;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--paper);
+      font-family: "Aptos", "Segoe UI", system-ui, sans-serif;
+      line-height: 1.5;
+    }
+    button { font: inherit; }
+    button:focus-visible, [tabindex]:focus-visible { outline: 3px solid rgba(223, 102, 75, .35); outline-offset: 3px; }
+
+    .app-shell { min-height: 100dvh; }
+    .topbar {
+      height: 74px;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 clamp(18px, 5vw, 72px);
+      background: rgba(246, 245, 241, .92);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      backdrop-filter: blur(16px);
+    }
+    .brand { display: flex; align-items: center; gap: 10px; font-weight: 750; letter-spacing: -.02em; }
+    .brand-mark { width: 28px; height: 28px; border-radius: 50%; background: var(--accent); position: relative; }
+    .brand-mark::after { content: ""; width: 9px; height: 9px; border-radius: 50%; background: var(--paper); position: absolute; left: 10px; top: 5px; box-shadow: 0 8px 0 var(--paper); }
+    .brand small { display: block; color: var(--muted); font-weight: 500; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; }
+    .top-actions { display: flex; align-items: center; gap: 10px; }
+    .quiet-btn, .level-btn {
+      border: 1px solid var(--line); background: transparent; color: var(--ink);
+      padding: 9px 13px; border-radius: 999px; cursor: pointer; transition: .18s ease;
+    }
+    .quiet-btn:hover, .level-btn:hover { border-color: #bdc5be; background: var(--white); }
+    .level-btn { background: var(--white); font-size: 13px; }
+
+    .page { width: min(1200px, calc(100% - 36px)); margin: 0 auto; padding: 46px 0 72px; }
+    .intro { display: grid; grid-template-columns: 1.15fr .85fr; align-items: end; gap: 42px; padding: 10px 0 38px; }
+    .eyebrow { color: var(--accent); font-size: 12px; font-weight: 760; letter-spacing: .13em; text-transform: uppercase; margin: 0 0 14px; }
+    h1 { margin: 0; font-size: clamp(32px, 4.2vw, 57px); letter-spacing: -.06em; line-height: .98; max-width: 620px; }
+    .intro-note { color: var(--muted); max-width: 330px; margin: 0 0 4px; font-size: 15px; }
+    .reading-layout { display: grid; grid-template-columns: minmax(0, 1fr) 330px; gap: 22px; align-items: start; }
+    .article, .side-panel { background: var(--white); border: 1px solid var(--line); border-radius: var(--radius); }
+    .article { padding: clamp(24px, 4vw, 54px); }
+    .article-meta { display: flex; justify-content: space-between; gap: 16px; align-items: center; padding-bottom: 28px; border-bottom: 1px solid var(--line); }
+    .source { color: var(--muted); font-size: 13px; }
+    .source strong { color: var(--ink); font-weight: 650; }
+    .progress { font-size: 12px; color: var(--muted); white-space: nowrap; }
+    .article h2 { font-size: clamp(28px, 3vw, 42px); letter-spacing: -.045em; line-height: 1.08; margin: 38px 0 12px; max-width: 680px; }
+    .dek { color: var(--muted); font-size: 17px; max-width: 600px; margin: 0 0 34px; }
+    .article p { max-width: 680px; font-family: Georgia, "Times New Roman", serif; font-size: 18px; line-height: 1.78; margin: 0 0 22px; color: #37423e; }
+    .sentence { cursor: pointer; border-radius: 5px; transition: background .15s ease; }
+    .sentence:hover { background: #f3f4ef; }
+    .word { cursor: pointer; border-bottom: 1px dashed #cbd0c9; transition: color .15s ease, background .15s ease; }
+    .word:hover, .word.active { color: var(--accent); background: var(--accent-soft); border-bottom-color: transparent; }
+    .word.hint { background: linear-gradient(transparent 62%, var(--accent-soft) 62%); border-bottom-color: var(--accent); }
+    .word.known { border-bottom-color: transparent; }
+    .inline-tip { display: none; border-left: 3px solid var(--accent); background: #fcf1ed; color: #79483d; padding: 11px 14px; margin: 20px 0 24px; font-size: 14px; border-radius: 0 9px 9px 0; }
+    .inline-tip.show { display: block; }
+    .article-footer { border-top: 1px solid var(--line); margin-top: 38px; padding-top: 20px; display: flex; align-items: center; justify-content: space-between; gap: 12px; color: var(--muted); font-size: 13px; }
+    .mark-done { border: 0; background: var(--ink); color: var(--white); padding: 10px 15px; border-radius: 999px; cursor: pointer; transition: transform .15s ease, background .15s ease; }
+    .mark-done:hover { background: #30403a; }
+    .mark-done:active, .quiet-btn:active, .level-btn:active { transform: translateY(1px) scale(.98); }
+
+    .side-panel { position: sticky; top: 96px; overflow: hidden; }
+    .panel-tabs { display: grid; grid-template-columns: 1fr 1fr; border-bottom: 1px solid var(--line); }
+    .tab { border: 0; background: transparent; color: var(--muted); padding: 15px; cursor: pointer; font-weight: 650; font-size: 13px; position: relative; }
+    .tab.active { color: var(--ink); }
+    .tab.active::after { content: ""; position: absolute; left: 15px; right: 15px; bottom: -1px; height: 2px; background: var(--accent); }
+    .panel-body { padding: 20px; }
+    .selection { min-height: 190px; }
+    .selection-empty { color: var(--muted); font-size: 14px; padding: 10px 0; }
+    .selected-word { font-size: 30px; letter-spacing: -.04em; margin: 0 0 3px; }
+    .pronunciation { color: var(--muted); font-size: 13px; margin-bottom: 14px; }
+    .meaning { font-size: 16px; margin: 0 0 5px; }
+    .meaning-en { color: var(--muted); font-size: 13px; margin: 0 0 18px; }
+    .save-word { border: 1px solid var(--accent); color: var(--accent); background: transparent; border-radius: 999px; cursor: pointer; padding: 8px 12px; font-size: 13px; font-weight: 700; }
+    .save-word.saved { background: var(--accent); color: var(--white); }
+    .context-box { background: var(--paper); border-radius: 10px; padding: 14px; color: var(--muted); font: 13px/1.6 Georgia, serif; margin-top: 18px; }
+    .context-box strong { color: var(--ink); font-weight: 500; }
+    .review-panel { display: none; }
+    .review-panel.show { display: block; }
+    .review-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 15px; }
+    .review-head h3 { margin: 0; font-size: 17px; letter-spacing: -.02em; }
+    .review-count { color: var(--accent); font-size: 12px; font-weight: 700; }
+    .review-card { background: var(--paper); border-radius: 10px; padding: 17px; margin-bottom: 10px; }
+    .review-card strong { font-size: 19px; }
+    .review-card p { color: var(--muted); margin: 7px 0 12px; font-size: 13px; }
+    .review-actions { display: flex; gap: 7px; }
+    .review-actions button { border: 1px solid var(--line); background: var(--white); color: var(--ink); border-radius: 999px; cursor: pointer; padding: 6px 10px; font-size: 12px; }
+    .review-actions button:hover { border-color: var(--accent); color: var(--accent); }
+
+    .control-strip { display: flex; justify-content: space-between; align-items: center; gap: 15px; margin: 0 0 16px; }
+    .control-group { display: flex; gap: 8px; flex-wrap: wrap; }
+    .control { border: 1px solid var(--line); background: transparent; color: var(--muted); border-radius: 999px; padding: 8px 12px; cursor: pointer; font-size: 12px; }
+    .control[aria-pressed="true"] { background: var(--mint); border-color: #bcd2c4; color: #31513f; }
+    .help-note { color: var(--muted); font-size: 12px; }
+    .toast { position: fixed; right: 24px; bottom: 24px; max-width: min(340px, calc(100% - 48px)); background: var(--ink); color: var(--white); border-radius: 10px; padding: 12px 15px; font-size: 13px; opacity: 0; transform: translateY(10px); pointer-events: none; transition: .2s ease; z-index: 20; }
+    .toast.show { opacity: 1; transform: translateY(0); }
+
+    @media (max-width: 820px) {
+      .intro { grid-template-columns: 1fr; gap: 17px; padding-bottom: 28px; }
+      .intro-note { max-width: 500px; }
+      .reading-layout { grid-template-columns: 1fr; }
+      .side-panel { position: static; }
+    }
+    @media (max-width: 560px) {
+      .topbar { height: 65px; padding: 0 16px; }
+      .brand small, .quiet-btn { display: none; }
+      .page { width: min(100% - 24px, 1200px); padding-top: 28px; }
+      .article { padding: 22px 19px; }
+      .article-meta, .article-footer, .control-strip { align-items: flex-start; flex-direction: column; }
+      .article p { font-size: 17px; }
+      .help-note { order: 2; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { transition-duration: .01ms !important; animation-duration: .01ms !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="brand" aria-label="Lingo Lens">
+        <span class="brand-mark" aria-hidden="true"></span>
+        <span>Lingo Lens<small>渐进式英文阅读</small></span>
+      </div>
+      <div class="top-actions">
+        <button class="quiet-btn" id="focusBtn" type="button">进入专注模式</button>
+        <button class="level-btn" id="levelBtn" type="button" aria-label="切换阅读水平">B1 · Curious reader</button>
+      </div>
+    </header>
+
+    <main class="page">
+      <section class="intro" aria-labelledby="page-title">
+        <div>
+          <p class="eyebrow">Read with just enough help</p>
+          <h1 id="page-title">把网页变成你的<br />私人词汇书。</h1>
+        </div>
+        <p class="intro-note">保留英文，按需打开中文。今天先读完这一篇，遇到的词会自动留在你的复习架上。</p>
+      </section>
+
+      <div class="control-strip">
+        <div class="control-group" aria-label="阅读辅助设置">
+          <button class="control" id="hintBtn" type="button" aria-pressed="true">显示生词提示</button>
+          <button class="control" id="sentenceBtn" type="button" aria-pressed="false">点击句子看翻译</button>
+        </div>
+        <span class="help-note">点击带下划线的词，或点击任意句子</span>
+      </div>
+
+      <section class="reading-layout">
+        <article class="article" id="article">
+          <div class="article-meta">
+            <span class="source">The Daily Practice <strong>·</strong> Ideas</span>
+            <span class="progress">阅读 04:12 <strong>·</strong> 预计还需 3 分钟</span>
+          </div>
+          <h2>Why small habits beat big plans</h2>
+          <p class="dek">The most useful change is often the one that feels almost too easy to count.</p>
+
+          <p><span class="sentence">When people decide to learn something new, they often begin with an ambitious plan.</span> They buy a new notebook, download three apps, and promise to study for an hour every day.</p>
+
+          <p><span class="sentence">The plan looks <span class="word hint" data-word="ambitious">ambitious</span> on paper, but it quietly depends on a perfect day.</span> On a busy morning, the whole system can feel too heavy to start.</p>
+          <div class="inline-tip" id="inlineTip" role="status"></div>
+
+          <p>Behavior researchers call this the <span class="word hint" data-word="friction">friction</span> problem. Every extra step between you and a useful action makes that action less likely to happen.</p>
+
+          <p><span class="sentence">A smaller habit works because it lowers the <span class="word hint" data-word="threshold">threshold</span> for beginning.</span> Reading one paragraph is not impressive. However, it is easy enough to repeat, and repetition gives the habit a chance to grow.</p>
+
+          <p>Try this today: open one article you genuinely care about. Read until you meet a word you cannot understand. Look it up, save it, and continue. The goal is not to understand every word. The goal is to return tomorrow with a little more <span class="word hint" data-word="confidence">confidence</span>.</p>
+
+          <div class="article-footer">
+            <span id="savedStatus">已读 62% · 本文遇到 4 个新词</span>
+            <button class="mark-done" id="doneBtn" type="button">读完并生成复习</button>
+          </div>
+        </article>
+
+        <aside class="side-panel" aria-label="词汇与复习">
+          <div class="panel-tabs" role="tablist">
+            <button class="tab active" id="wordTab" type="button" role="tab" aria-selected="true">单词卡</button>
+            <button class="tab" id="reviewTab" type="button" role="tab" aria-selected="false">今日复习 <span id="reviewBadge">4</span></button>
+          </div>
+
+          <div class="panel-body" id="wordPanel">
+            <div class="selection" id="selection">
+              <div class="selection-empty">选一个你想留下的词。<br />这里会显示语境释义。</div>
+            </div>
+          </div>
+
+          <div class="panel-body review-panel" id="reviewPanel">
+            <div class="review-head"><h3>刚刚遇到的词</h3><span class="review-count" id="reviewCount">4 words</span></div>
+            <div id="reviewList"></div>
+          </div>
+        </aside>
+      </section>
+    </main>
+    <div class="toast" id="toast" role="status"></div>
+  </div>
+
+  <script>
+    const dictionary = {
+      ambitious: { zh: "有雄心的；目标很高的", pron: "/æmˈbɪʃəs/", en: "having a strong desire to succeed", example: "an ambitious plan" },
+      friction: { zh: "阻力；让事情变难的额外步骤", pron: "/ˈfrɪkʃən/", en: "small difficulties that make an action harder", example: "remove friction from the process" },
+      threshold: { zh: "门槛；开始做某事所需的最低程度", pron: "/ˈθreʃhoʊld/", en: "the point at which something begins", example: "lower the threshold for beginning" },
+      confidence: { zh: "信心；自信", pron: "/ˈkɑːnfɪdəns/", en: "the feeling that you can do something well", example: "build your confidence" }
+    };
+    const translations = {
+      "When people decide to learn something new, they often begin with an ambitious plan.": "当人们决定学习新东西时，往往会从一个雄心勃勃的计划开始。",
+      "The plan looks ambitious on paper, but it quietly depends on a perfect day.": "这个计划写在纸面上很有抱负，但它其实悄悄依赖于一个完美的日子。",
+      "A smaller habit works because it lowers the threshold for beginning.": "更小的习惯之所以有效，是因为它降低了开始行动的门槛。"
+    };
+    const saved = new Set(JSON.parse(localStorage.getItem("lingo-lens-saved") || "[]"));
+    const seen = new Set();
+    const selection = document.querySelector("#selection");
+    const inlineTip = document.querySelector("#inlineTip");
+    const toast = document.querySelector("#toast");
+    let toastTimer;
+
+    function notify(message) {
+      toast.textContent = message;
+      toast.classList.add("show");
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => toast.classList.remove("show"), 2400);
+    }
+
+    function renderWord(word) {
+      const item = dictionary[word];
+      seen.add(word);
+      document.querySelectorAll(".word").forEach(node => node.classList.toggle("active", node.dataset.word === word));
+      selection.innerHTML = `
+        <h3 class="selected-word">${word}</h3>
+        <div class="pronunciation">${item.pron}</div>
+        <p class="meaning">${item.zh}</p>
+        <p class="meaning-en">${item.en}</p>
+        <button class="save-word ${saved.has(word) ? "saved" : ""}" id="saveWord" type="button">${saved.has(word) ? "已在词汇架" : "加入词汇架"}</button>
+        <div class="context-box"><strong>文中语境</strong><br />${item.example}</div>`;
+      document.querySelector("#saveWord").addEventListener("click", () => {
+        if (saved.has(word)) { saved.delete(word); } else { saved.add(word); }
+        localStorage.setItem("lingo-lens-saved", JSON.stringify([...saved]));
+        renderWord(word);
+        updateReview();
+        notify(saved.has(word) ? `已保存 ${word}` : `已从词汇架移除 ${word}`);
+      });
+    }
+
+    document.querySelectorAll(".word").forEach(node => node.addEventListener("click", event => {
+      event.stopPropagation();
+      renderWord(node.dataset.word);
+    }));
+
+    document.querySelectorAll(".sentence").forEach(node => node.addEventListener("click", () => {
+      if (document.querySelector("#sentenceBtn").getAttribute("aria-pressed") !== "true") {
+        notify("打开“点击句子看翻译”后，点击任意句子即可查看翻译");
+        return;
+      }
+      const text = node.textContent.trim();
+      inlineTip.textContent = translations[text] || "这句话的意思是：先理解大意，再回头确认陌生词。";
+      inlineTip.classList.add("show");
+    }));
+
+    document.querySelector("#hintBtn").addEventListener("click", event => {
+      const active = event.currentTarget.getAttribute("aria-pressed") === "true";
+      event.currentTarget.setAttribute("aria-pressed", String(!active));
+      document.querySelectorAll(".word").forEach(word => word.classList.toggle("hint", !active));
+      notify(!active ? "已显示可能不认识的词" : "已隐藏提示，先靠上下文阅读");
+    });
+    document.querySelector("#sentenceBtn").addEventListener("click", event => {
+      const active = event.currentTarget.getAttribute("aria-pressed") === "true";
+      event.currentTarget.setAttribute("aria-pressed", String(!active));
+      notify(!active ? "句子翻译已开启" : "句子翻译已关闭");
+    });
+    document.querySelector("#focusBtn").addEventListener("click", event => {
+      document.body.classList.toggle("focus-mode");
+      const on = document.body.classList.contains("focus-mode");
+      event.currentTarget.textContent = on ? "退出专注模式" : "进入专注模式";
+      document.querySelector(".side-panel").style.display = on ? "none" : "block";
+      document.querySelector(".reading-layout").style.gridTemplateColumns = on ? "minmax(0, 760px)" : "minmax(0, 1fr) 330px";
+      document.querySelector(".reading-layout").style.justifyContent = on ? "center" : "initial";
+      notify(on ? "专注模式已开启" : "已回到词汇面板");
+    });
+    document.querySelector("#levelBtn").addEventListener("click", event => {
+      const levels = ["A2 · Getting started", "B1 · Curious reader", "B2 · Deep reader"];
+      const current = levels.indexOf(event.currentTarget.textContent);
+      event.currentTarget.textContent = levels[(current + 1) % levels.length];
+      notify(`阅读提示已调整为 ${event.currentTarget.textContent}`);
+    });
+    document.querySelector("#doneBtn").addEventListener("click", () => {
+      updateReview();
+      document.querySelector("#reviewTab").click();
+      notify("复习架已生成，明天用原句再见一次这些词");
+    });
+    document.querySelector("#wordTab").addEventListener("click", () => switchTab("word"));
+    document.querySelector("#reviewTab").addEventListener("click", () => { updateReview(); switchTab("review"); });
+    function switchTab(which) {
+      const isWord = which === "word";
+      document.querySelector("#wordTab").classList.toggle("active", isWord);
+      document.querySelector("#reviewTab").classList.toggle("active", !isWord);
+      document.querySelector("#wordTab").setAttribute("aria-selected", String(isWord));
+      document.querySelector("#reviewTab").setAttribute("aria-selected", String(!isWord));
+      document.querySelector("#wordPanel").style.display = isWord ? "block" : "none";
+      document.querySelector("#reviewPanel").classList.toggle("show", !isWord);
+    }
+    function updateReview() {
+      const words = [...new Set([...seen, ...saved])];
+      document.querySelector("#reviewCount").textContent = `${words.length} words`;
+      document.querySelector("#reviewBadge").textContent = words.length;
+      document.querySelector("#reviewList").innerHTML = words.length ? words.map(word => `
+        <div class="review-card" data-review-word="${word}">
+          <strong>${word}</strong><p>${dictionary[word].zh}</p>
+          <div class="review-actions"><button type="button" data-action="hide">先记住</button><button type="button" data-action="remove">移除</button></div>
+        </div>`).join("") : `<div class="selection-empty">今天还没有生词。先点开文章里的下划线词。</div>`;
+      document.querySelectorAll("[data-action='hide']").forEach(btn => btn.addEventListener("click", () => { btn.textContent = "明天再见"; btn.disabled = true; notify("已标记为明天复习"); }));
+      document.querySelectorAll("[data-action='remove']").forEach(btn => btn.addEventListener("click", event => { const word = event.target.closest("[data-review-word]").dataset.reviewWord; saved.delete(word); seen.delete(word); localStorage.setItem("lingo-lens-saved", JSON.stringify([...saved])); updateReview(); notify(`已移除 ${word}`); }));
+    }
+  </script>
+</body>
+</html>
